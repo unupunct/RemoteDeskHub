@@ -123,26 +123,22 @@ jobs:
       - name: Build baseline installers (1.0.0)
         shell: pwsh
         run: |
-          $arguments = @('-Version', '1.0.0')
+          $parameters = @{ Version = '1.0.0' }
           if ($env:SIGNING_PFX_PATH) {
-            $arguments += @(
-              '-SigningPfxPath', $env:SIGNING_PFX_PATH,
-              '-SigningPfxPassword', $env:CODE_SIGNING_PFX_PASSWORD
-            )
+            $parameters.SigningPfxPath = $env:SIGNING_PFX_PATH
+            $parameters.SigningPfxPassword = $env:CODE_SIGNING_PFX_PASSWORD
           }
-          & .\scripts\build-installers.ps1 @arguments
+          & .\scripts\build-installers.ps1 @parameters
 
       - name: Build upgrade installers (1.0.1)
         shell: pwsh
         run: |
-          $arguments = @('-Version', '1.0.1')
+          $parameters = @{ Version = '1.0.1' }
           if ($env:SIGNING_PFX_PATH) {
-            $arguments += @(
-              '-SigningPfxPath', $env:SIGNING_PFX_PATH,
-              '-SigningPfxPassword', $env:CODE_SIGNING_PFX_PASSWORD
-            )
+            $parameters.SigningPfxPath = $env:SIGNING_PFX_PATH
+            $parameters.SigningPfxPassword = $env:CODE_SIGNING_PFX_PASSWORD
           }
-          & .\scripts\build-installers.ps1 @arguments
+          & .\scripts\build-installers.ps1 @parameters
 
       - name: Test install, upgrade and uninstall
         shell: pwsh
