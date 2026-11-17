@@ -1,0 +1,403 @@
+<UserControl x:Class="RemoteDeskHub.Desktop.Views.ComputersView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="clr-namespace:RemoteDeskHub.Core.Models;assembly=RemoteDeskHub.Core"
+             Background="Transparent">
+    <Grid Margin="26,20,26,22">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <Grid Grid.Row="0" Margin="0,0,0,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="240" />
+                <ColumnDefinition Width="160" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}"
+                     Height="36" VerticalContentAlignment="Center" ToolTip="Search by name, IP address or group" />
+            <ComboBox Grid.Column="1" ItemsSource="{Binding Groups}" SelectedItem="{Binding SelectedGroupFilter}"
+                      DisplayMemberPath="Name" Style="{StaticResource AppComboBox}" Height="36" Margin="8,0,0,0" />
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="8,0,0,0">
+                <Button Content="Search" Style="{StaticResource SecondaryButton}" Command="{Binding SearchCommand}" />
+                <Button Content="Refresh" Style="{StaticResource GhostButton}" Command="{Binding RefreshCommand}" />
+            </StackPanel>
+            <StackPanel Grid.Column="3" Orientation="Horizontal">
+                <Button Content="New group" Style="{StaticResource GhostButton}" Command="{Binding CreateGroupCommand}"
+                        IsEnabled="{Binding CanManageGroups}" />
+                <Button Content="Rename group" Style="{StaticResource GhostButton}" Command="{Binding RenameGroupCommand}"
+                        IsEnabled="{Binding CanManageGroups}" />
+                <Button Content="Delete group" Style="{StaticResource GhostButton}" Command="{Binding DeleteGroupCommand}"
+                        IsEnabled="{Binding CanManageGroups}" />
+                <Button Content="{Binding EnrollmentButtonText}" Style="{StaticResource SecondaryButton}"
+                        Command="{Binding OpenEnrollmentCommand}" IsEnabled="{Binding CanEnroll}" Margin="8,0,0,0" />
+                <Button Content="Add computer" Style="{StaticResource PrimaryButton}" Command="{Binding OpenAddCommand}"
+                        IsEnabled="{Binding CanManage}" Margin="8,0,0,0" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="430" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Computer list -->
+            <Border Style="{StaticResource Card}" Padding="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Margin="16,14,16,8">
+                        <TextBlock Text="{Binding SummaryText}" Style="{StaticResource Caption}" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="Refresh inventory (all)" Style="{StaticResource GhostButton}" FontSize="11"
+                                    Command="{Binding BulkRefreshInventoryCommand}" IsEnabled="{Binding CanManage}" />
+                            <Button Content="Run diagnostics (all)" Style="{StaticResource GhostButton}" FontSize="11"
+                                    Command="{Binding BulkDiagnosticsCommand}" IsEnabled="{Binding CanManage}" />
+                        </StackPanel>
+                    </Grid>
+                    <DataGrid Grid.Row="1" Style="{StaticResource AppDataGrid}"
+                              ItemsSource="{Binding Computers}" SelectedItem="{Binding SelectedComputer}"
+                              RowHeight="42" Margin="8,0,8,8">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="Status" Width="95">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate DataType="{x:Type models:ComputerSummary}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Ellipse Width="8" Height="8" Margin="0,0,7,0" VerticalAlignment="Center"
+                                                     Fill="{Binding Status, Converter={StaticResource StatusToBrush}}" />
+                                            <TextBlock Text="{Binding StatusText}" FontSize="12"
+                                                       Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Computer" Width="*" MinWidth="130">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate DataType="{x:Type models:ComputerSummary}">
+                                        <StackPanel VerticalAlignment="Center" ToolTip="{Binding DisplayName}">
+                                            <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold"
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding FriendlyName}" FontSize="10"
+                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="IP address" Binding="{Binding IpAddress}" Width="105" />
+                            <DataGridTextColumn Header="Group" Binding="{Binding GroupName}" Width="90" />
+                            <DataGridTextColumn Header="CPU" Binding="{Binding CpuPercent, StringFormat={}{0:0.#}%}" Width="55" />
+                            <DataGridTextColumn Header="Memory" Binding="{Binding MemoryPercent, StringFormat={}{0:0.#}%}" Width="65" />
+                            <DataGridTextColumn Header="Last seen" Binding="{Binding LastSeenUtc, Converter={StaticResource UtcToLocal}}"
+                                                Width="130" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <TextBlock Grid.Row="1" Text="No computers yet. Use Discovery or enroll an agent."
+                               Style="{StaticResource Caption}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Visibility="{Binding Computers.Count, Converter={StaticResource ZeroToCollapsed}}" />
+                </Grid>
+            </Border>
+
+            <!-- Details -->
+            <Border Grid.Column="2" Style="{StaticResource Card}">
+                <Grid>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Visibility="{Binding IsDetailsVisible, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding SelectedDetail.Summary.DisplayName}" Style="{StaticResource H2}" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding SelectedDetail.Summary.StatusText}" Style="{StaticResource Muted}" Margin="0,3,0,14" />
+
+                            <Border Style="{StaticResource Pill}" HorizontalAlignment="Left" Margin="0,0,0,14">
+                                <TextBlock Text="{Binding SelectedDetail.Summary.IsTrusted, StringFormat='Trusted: {0}'}" FontSize="11" />
+                            </Border>
+
+                            <TextBlock Text="Identity" Style="{StaticResource H3}" Margin="0,0,0,8" />
+                            <Grid Margin="0,0,0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="IP address" Style="{StaticResource Caption}" Grid.Row="0" Margin="0,3" />
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedDetail.Summary.IpAddress}" Style="{StaticResource Body}" />
+                                <TextBlock Text="MAC address" Style="{StaticResource Caption}" Grid.Row="1" Margin="0,3" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedDetail.MacAddress}" Style="{StaticResource Body}" />
+                                <TextBlock Text="Operating system" Style="{StaticResource Caption}" Grid.Row="2" Margin="0,3" />
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedDetail.Summary.OperatingSystem}" Style="{StaticResource Body}" />
+                                <TextBlock Text="Agent version" Style="{StaticResource Caption}" Grid.Row="3" Margin="0,3" />
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedDetail.Summary.AgentVersion}" Style="{StaticResource Body}" />
+                                <TextBlock Text="Group" Style="{StaticResource Caption}" Grid.Row="4" Margin="0,3" />
+                                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedDetail.Summary.GroupName}" Style="{StaticResource Body}" />
+                                <TextBlock Text="Last seen" Style="{StaticResource Caption}" Grid.Row="5" Margin="0,3" />
+                                <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding SelectedDetail.Summary.LastSeenUtc, Converter={StaticResource UtcToLocal}}" Style="{StaticResource Body}" />
+                                <TextBlock Text="Agent state" Style="{StaticResource Caption}" Grid.Row="6" Margin="0,3" />
+                                <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding SelectedDetail.AgentState}" Style="{StaticResource Body}" />
+                                <TextBlock Text="Machine ID" Style="{StaticResource Caption}" Grid.Row="7" Margin="0,3" />
+                                <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding SelectedDetail.Summary.MachineId}" Style="{StaticResource Body}" TextWrapping="Wrap"
+                                           ToolTip="Stable hardware identity reported by the agent. It is not an IP address and survives restarts and DHCP changes." />
+                            </Grid>
+
+                            <TextBlock Text="Remote access IDs" Style="{StaticResource H3}" Margin="0,0,0,8" />
+                            <Grid Margin="0,0,0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="TeamViewer" Style="{StaticResource Caption}" Grid.Row="0" Margin="0,3" />
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedDetail.Summary.TeamViewerId}" Style="{StaticResource Body}" />
+                                <TextBlock Text="AnyDesk" Style="{StaticResource Caption}" Grid.Row="1" Margin="0,3" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedDetail.Summary.AnyDeskId}" Style="{StaticResource Body}" />
+                                <TextBlock Text="LM Viewer" Style="{StaticResource Caption}" Grid.Row="2" Margin="0,3" />
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedDetail.Summary.LmViewerId}" Style="{StaticResource Body}" />
+                                <TextBlock Text="RustDesk" Style="{StaticResource Caption}" Grid.Row="3" Margin="0,3" />
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedDetail.Summary.RustDeskId}" Style="{StaticResource Body}" />
+                            </Grid>
+
+                            <TextBlock Text="Hardware" Style="{StaticResource H3}" Margin="0,0,0,8" />
+                            <Grid Margin="0,0,0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Manufacturer" Style="{StaticResource Caption}" Grid.Row="0" Margin="0,3" />
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedDetail.Manufacturer}" Style="{StaticResource Body}" />
+                                <TextBlock Text="Model" Style="{StaticResource Caption}" Grid.Row="1" Margin="0,3" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedDetail.Model}" Style="{StaticResource Body}" />
+                                <TextBlock Text="CPU" Style="{StaticResource Caption}" Grid.Row="2" Margin="0,3" />
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedDetail.Hardware.CpuModel}" Style="{StaticResource Body}" />
+                                <TextBlock Text="Memory" Style="{StaticResource Caption}" Grid.Row="3" Margin="0,3" />
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedDetail.Summary.MemoryTotalBytes, Converter={StaticResource BytesToText}}" Style="{StaticResource Body}" />
+                                <TextBlock Text="Software items" Style="{StaticResource Caption}" Grid.Row="4" Margin="0,3" />
+                                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedDetail.SoftwareCount}" Style="{StaticResource Body}" />
+                            </Grid>
+
+                            <TextBlock Text="Configuration history" Style="{StaticResource H3}" Margin="0,0,0,6" />
+                            <TextBlock Text="No hardware changes recorded yet."
+                                       Style="{StaticResource Caption}" Margin="0,0,0,10"
+                                       Visibility="{Binding HardwareHistory.Count, Converter={StaticResource ZeroToCollapsed}}" />
+                            <ItemsControl ItemsSource="{Binding HardwareHistory}" Margin="0,0,0,14">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource SurfaceAltBrush}" BorderBrush="{StaticResource BorderBrush}"
+                                                BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,6">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding CollectedText}" Style="{StaticResource Caption}" />
+                                                <TextBlock Text="{Binding ChangeSummary}" Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,3,0,0" />
+                                                <TextBlock Text="{Binding Source}" Style="{StaticResource Caption}" Margin="0,3,0,0" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <TextBlock Text="Live utilisation" Style="{StaticResource H3}" Margin="0,0,0,6" />
+                            <Grid Margin="0,0,0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="CPU" Style="{StaticResource Caption}" />
+                                    <TextBlock Text="{Binding SelectedDetail.Summary.CpuPercent, Converter={StaticResource PercentToText}}"
+                                               Style="{StaticResource H2}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Memory" Style="{StaticResource Caption}" />
+                                    <TextBlock Text="{Binding SelectedDetail.Summary.MemoryPercent, Converter={StaticResource PercentToText}}"
+                                               Style="{StaticResource H2}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock Text="Notes" Style="{StaticResource Caption}" />
+                            <TextBlock Text="{Binding SelectedDetail.Summary.Notes}" Style="{StaticResource Muted}" Margin="0,4,0,10" />
+
+                            <WrapPanel>
+                                <Button Content="Edit" Style="{StaticResource SecondaryButton}" Command="{Binding OpenEditCommand}"
+                                        IsEnabled="{Binding CanManage}" Margin="0,0,8,8" />
+                                <Button Content="Refresh inventory" Style="{StaticResource SecondaryButton}"
+                                        Command="{Binding RefreshInventoryCommand}" IsEnabled="{Binding CanManage}" Margin="0,0,8,8" />
+                                <Button Content="Toggle trust" Style="{StaticResource SecondaryButton}"
+                                        Command="{Binding ToggleTrustCommand}" IsEnabled="{Binding CanManage}" Margin="0,0,8,8" />
+                                <Button Content="Revoke agent" Style="{StaticResource DangerButton}"
+                                        Command="{Binding RevokeAgentCommand}" IsEnabled="{Binding CanRevokeAgent}" Margin="0,0,8,8" />
+                                <Button Content="Remove" Style="{StaticResource DangerButton}"
+                                        Command="{Binding RemoveCommand}" IsEnabled="{Binding CanManage}" Margin="0,0,0,8" />
+                            </WrapPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Add / edit form -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  Visibility="{Binding IsEditorOpen, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding EditorTitle}" Style="{StaticResource H2}" />
+                            <TextBlock Text="Register a computer manually, then enroll an agent to manage it."
+                                       Style="{StaticResource Muted}" Margin="0,3,0,16" />
+
+                            <TextBlock Text="Computer name" Style="{StaticResource Caption}" Margin="0,0,0,6" />
+                            <TextBox Text="{Binding EditorName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}"
+                                     IsReadOnly="{Binding IsEditing}" />
+
+                            <TextBlock Text="IPv4 address" Style="{StaticResource Caption}" Margin="0,12,0,6" />
+                            <TextBox Text="{Binding EditorIpAddress, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}"
+                                     IsReadOnly="{Binding IsEditing}" ToolTip="Private LAN address only" />
+
+                            <TextBlock Text="MAC address (optional)" Style="{StaticResource Caption}" Margin="0,12,0,6" />
+                            <TextBox Text="{Binding EditorMacAddress, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}"
+                                     IsReadOnly="{Binding IsEditing}" />
+
+                            <TextBlock Text="Friendly name" Style="{StaticResource Caption}" Margin="0,12,0,6" />
+                            <TextBox Text="{Binding EditorFriendlyName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+
+                            <TextBlock Text="Description" Style="{StaticResource Caption}" Margin="0,12,0,6" />
+                            <TextBox Text="{Binding EditorDescription, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+
+                            <TextBlock Text="Group" Style="{StaticResource Caption}" Margin="0,12,0,6" />
+                            <ComboBox ItemsSource="{Binding Groups}" SelectedItem="{Binding EditorGroup}" DisplayMemberPath="Name"
+                                      Style="{StaticResource AppComboBox}" Height="36" />
+
+                            <TextBlock Text="Tags (comma separated)" Style="{StaticResource Caption}" Margin="0,12,0,6" />
+                            <TextBox Text="{Binding EditorTags, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+
+                            <StackPanel Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
+                                <TextBlock Text="Remote-access IDs (optional)" Style="{StaticResource H3}" Margin="0,16,0,2" />
+                                <TextBlock Text="Saved per computer and prefilled in Remote Assistance. Passwords are never stored."
+                                           Style="{StaticResource Caption}" TextWrapping="Wrap" Margin="0,0,0,6" />
+
+                                <TextBlock Text="TeamViewer ID" Style="{StaticResource Caption}" Margin="0,6,0,6" />
+                                <TextBox Text="{Binding EditorTeamViewerId, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+
+                                <TextBlock Text="AnyDesk ID or alias" Style="{StaticResource Caption}" Margin="0,10,0,6" />
+                                <TextBox Text="{Binding EditorAnyDeskId, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+
+                                <TextBlock Text="LM Viewer ID / address" Style="{StaticResource Caption}" Margin="0,10,0,6" />
+                                <TextBox Text="{Binding EditorLmViewerId, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+
+                                <TextBlock Text="RustDesk ID" Style="{StaticResource Caption}" Margin="0,10,0,6" />
+                                <TextBox Text="{Binding EditorRustDeskId, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+                            </StackPanel>
+
+                            <TextBlock Text="Notes" Style="{StaticResource Caption}" Margin="0,12,0,6" />
+                            <TextBox Text="{Binding EditorNotes, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}"
+                                     Height="70" AcceptsReturn="True" TextWrapping="Wrap" />
+
+                            <StackPanel Orientation="Horizontal" Margin="0,18,0,0">
+                                <Button Content="Save" Style="{StaticResource PrimaryButton}" Command="{Binding SaveEditorCommand}" />
+                                <Button Content="Cancel" Style="{StaticResource GhostButton}" Command="{Binding CancelEditCommand}" Margin="8,0,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Agent enrollment: pending approvals and single-use pairing packages -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  Visibility="{Binding IsEnrollmentOpen, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                            <TextBlock Text="Agent enrollment" Style="{StaticResource H2}" />
+                            <TextBlock Text="Approve agents that are waiting, or create a single-use pairing package for a new computer."
+                                       Style="{StaticResource Muted}" Margin="0,3,0,16" TextWrapping="Wrap" />
+
+                            <TextBlock Text="Pending approvals" Style="{StaticResource H3}" Margin="0,0,0,8" />
+                            <TextBlock Text="No agents are waiting for approval."
+                                       Style="{StaticResource Caption}" Margin="0,0,0,8"
+                                       Visibility="{Binding HasPendingEnrollments, Converter={StaticResource InverseBoolToVisibility}}" />
+                            <ItemsControl ItemsSource="{Binding PendingEnrollments}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource SurfaceAltBrush}" BorderBrush="{StaticResource BorderBrush}"
+                                                BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,8">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding ComputerName}" Style="{StaticResource Body}" FontWeight="SemiBold" />
+                                                <TextBlock Style="{StaticResource Caption}" Margin="0,2,0,0">
+                                                    <Run Text="{Binding RequestedIp}" /><Run Text=" · " /><Run
+                                                        Text="{Binding ConsumedUtc, Converter={StaticResource UtcToLocal}}" />
+                                                </TextBlock>
+                                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                                    <Button Content="Approve" Style="{StaticResource PrimaryButton}" FontSize="11"
+                                                            Command="{Binding DataContext.ApproveEnrollmentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}" />
+                                                    <Button Content="Reject" Style="{StaticResource DangerButton}" FontSize="11" Margin="8,0,0,0"
+                                                            Command="{Binding DataContext.RejectEnrollmentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <TextBlock Text="Create a pairing package" Style="{StaticResource H3}" Margin="0,18,0,8" />
+                            <TextBlock Text="HTTPS address agents use to reach this hub" Style="{StaticResource Caption}" Margin="0,0,0,6" />
+                            <TextBox Text="{Binding EnrollmentHubUrl, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}"
+                                     ToolTip="Use the hub's LAN address or DNS name, not localhost, so remote agents can connect." />
+
+                            <TextBlock Text="Token lifetime (hours, 1 to 168)" Style="{StaticResource Caption}" Margin="0,12,0,6" />
+                            <TextBox Text="{Binding EnrollmentLifetimeHours, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+
+                            <CheckBox Content="Automatically approve the agent that redeems this token"
+                                      IsChecked="{Binding EnrollmentAutoApprove}" Style="{StaticResource AppCheckBox}"
+                                      Margin="0,14,0,0" />
+                            <TextBlock Text="Leave unchecked to review the request in Pending approvals first."
+                                       Style="{StaticResource Caption}" Margin="0,4,0,0" />
+
+                            <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                                <Button Content="Generate and save..." Style="{StaticResource PrimaryButton}"
+                                        Command="{Binding GenerateEnrollmentPackageCommand}" />
+                                <Button Content="Close" Style="{StaticResource GhostButton}"
+                                        Command="{Binding CloseEnrollmentCommand}" Margin="8,0,0,0" />
+                            </StackPanel>
+
+                            <Border Background="{StaticResource SurfaceAltBrush}" BorderBrush="{StaticResource AccentBrush}"
+                                    BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,16,0,0"
+                                    Visibility="{Binding GeneratedEnrollmentToken, Converter={StaticResource NullToVisibility}}">
+                                <StackPanel>
+                                    <TextBlock Text="Enrollment token (shown once)" Style="{StaticResource Caption}" />
+                                    <TextBox Text="{Binding GeneratedEnrollmentToken, Mode=OneWay}" IsReadOnly="True"
+                                             Style="{StaticResource AppTextBox}" FontFamily="{StaticResource MonoFont}"
+                                             TextWrapping="Wrap" Margin="0,6,0,0" />
+                                    <TextBlock Text="{Binding GeneratedEnrollmentInfo}" Style="{StaticResource Caption}"
+                                               TextWrapping="Wrap" Margin="0,8,0,0" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid Grid.Row="2" Margin="0,12,0,0">
+            <TextBlock Text="{Binding BulkProgressText}" Style="{StaticResource Caption}" />
+            <ProgressBar Value="{Binding BulkProgressPercent}" Maximum="100" Width="260" HorizontalAlignment="Right"
+                         Height="4" />
+        </Grid>
+    </Grid>
+</UserControl>

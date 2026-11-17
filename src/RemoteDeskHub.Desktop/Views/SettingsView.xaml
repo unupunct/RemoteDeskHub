@@ -1,0 +1,334 @@
+<UserControl x:Class="RemoteDeskHub.Desktop.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="Transparent">
+    <Grid Margin="26,20,26,22">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,14">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="Save settings" Style="{StaticResource PrimaryButton}" Command="{Binding SaveCommand}"
+                        IsEnabled="{Binding CanManage}" />
+                <Button Content="Start hub" Style="{StaticResource SecondaryButton}" Command="{Binding StartHubCommand}"
+                        IsEnabled="{Binding CanManage}" Margin="8,0,0,0" />
+                <Button Content="Stop hub" Style="{StaticResource DangerButton}" Command="{Binding StopHubCommand}"
+                        IsEnabled="{Binding CanManage}" Margin="6,0,0,0" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Ellipse Width="9" Height="9" VerticalAlignment="Center" Margin="0,0,7,0">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="{StaticResource DangerBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsHubRunning}" Value="True">
+                                    <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+                <TextBlock Style="{StaticResource Caption}" VerticalAlignment="Center">
+                    <Run Text="Hub " />
+                    <Run Text="{Binding IsHubRunning, Mode=OneWay, Converter={StaticResource BoolToYesNo}}" />
+                    <Run Text=" · port " />
+                    <Run Text="{Binding BoundPort, Mode=OneWay}" />
+                </TextBlock>
+            </StackPanel>
+        </Grid>
+
+        <TabControl Grid.Row="1" Style="{StaticResource AppTabControl}" ItemContainerStyle="{StaticResource AppTabItem}">
+            <TabItem Header="General">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,14,0,0">
+                    <StackPanel MaxWidth="620" HorizontalAlignment="Left">
+                        <TextBlock Text="Application behaviour" Style="{StaticResource H2}" />
+                        <TextBlock Text="These preferences apply to this Windows account on this computer."
+                                   Style="{StaticResource Muted}" Margin="0,4,0,16" />
+                        <CheckBox Content="Start RemoteDesk Hub when I sign in to Windows" Style="{StaticResource AppCheckBox}"
+                                  IsChecked="{Binding StartWithWindows}" Margin="0,0,0,10" />
+                        <CheckBox Content="Minimise to the notification area instead of closing" Style="{StaticResource AppCheckBox}"
+                                  IsChecked="{Binding MinimizeToTray}" Margin="0,0,0,10" />
+                        <CheckBox Content="Show Windows notifications for new alerts" Style="{StaticResource AppCheckBox}"
+                                  IsChecked="{Binding WindowsNotifications}" />
+                        <Border Height="1" Background="{StaticResource BorderBrush}" Margin="0,20,0,16" />
+                        <TextBlock Text="Keyboard and layout" Style="{StaticResource H3}" />
+                        <TextBlock Text="Use the arrow at the top-left of the shell to collapse the sidebar to icons. The status bar shows the result of the last operation and turns red on failure."
+                                   Style="{StaticResource Muted}" Margin="0,6,0,0" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Network">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,14,0,0">
+                    <StackPanel MaxWidth="620" HorizontalAlignment="Left">
+                        <TextBlock Text="Hub and agent endpoints" Style="{StaticResource H2}" />
+                        <TextBlock Text="Changes to the hub port or bind address restart the listener when you save."
+                                   Style="{StaticResource Muted}" Margin="0,4,0,16" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Hub HTTPS port" Style="{StaticResource Caption}" Margin="0,0,0,5" />
+                                <TextBox Text="{Binding HubPort, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Agent management port" Style="{StaticResource Caption}" Margin="0,0,0,5" />
+                                <TextBox Text="{Binding AgentPort, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="Hub URL (used in pairing packages)" Style="{StaticResource Caption}" Margin="0,12,0,5" />
+                        <TextBox Text="{Binding HubUrl, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+
+                        <TextBlock Text="Bind address" Style="{StaticResource Caption}" Margin="0,12,0,5" />
+                        <ComboBox ItemsSource="{Binding BindAddresses}" SelectedItem="{Binding BindAddress}" IsEditable="True"
+                                  Style="{StaticResource AppComboBox}" Height="34" />
+                        <TextBlock Text="0.0.0.0 accepts agents from the LAN; 127.0.0.1 restricts management traffic to this computer."
+                                   Style="{StaticResource Caption}" Margin="0,6,0,0" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Monitoring">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,14,0,0">
+                    <StackPanel MaxWidth="680" HorizontalAlignment="Left">
+                        <TextBlock Text="Collection and retention" Style="{StaticResource H2}" />
+                        <TextBlock Text="Agents sample at the metrics interval and heartbeat at the heartbeat interval. Inventory is collected on demand from the Inventory page."
+                                   Style="{StaticResource Muted}" Margin="0,4,0,16" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Metrics interval (s)" Style="{StaticResource Caption}" Margin="0,0,0,5" />
+                                <TextBox Text="{Binding MetricsSeconds, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Heartbeat interval (s)" Style="{StaticResource Caption}" Margin="0,0,0,5" />
+                                <TextBox Text="{Binding HeartbeatSeconds, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Metrics retention (days)" Style="{StaticResource Caption}" Margin="0,0,0,5" />
+                                <TextBox Text="{Binding MetricsRetentionDays, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Alert cooldown (minutes)" Style="{StaticResource Caption}" Margin="0,0,0,5" />
+                                <TextBox Text="{Binding AlertCooldownMinutes, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Height="1" Background="{StaticResource BorderBrush}" Margin="0,20,0,16" />
+                        <TextBlock Text="Default alert thresholds" Style="{StaticResource H3}" Margin="0,0,0,10" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="CPU %" Style="{StaticResource Caption}" Margin="0,0,0,5" />
+                                <TextBox Text="{Binding CpuThreshold, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Memory %" Style="{StaticResource Caption}" Margin="0,0,0,5" />
+                                <TextBox Text="{Binding MemoryThreshold, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="4">
+                                <TextBlock Text="Free disk %" Style="{StaticResource Caption}" Margin="0,0,0,5" />
+                                <TextBox Text="{Binding DiskThreshold, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="6">
+                                <TextBlock Text="CPU °C" Style="{StaticResource Caption}" Margin="0,0,0,5" />
+                                <TextBox Text="{Binding TemperatureThreshold, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Discovery">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,14,0,0">
+                    <StackPanel MaxWidth="620" HorizontalAlignment="Left">
+                        <TextBlock Text="Network discovery" Style="{StaticResource H2}" />
+                        <TextBlock Text="Scans are restricted to private IPv4 space, capped at /24 per local subnet and 4096 hosts per run."
+                                   Style="{StaticResource Muted}" Margin="0,4,0,16" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Probe timeout (ms)" Style="{StaticResource Caption}" Margin="0,0,0,5" />
+                                <TextBox Text="{Binding DiscoveryTimeoutMs, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Concurrent probes" Style="{StaticResource Caption}" Margin="0,0,0,5" />
+                                <TextBox Text="{Binding DiscoveryConcurrency, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="Automatic scan interval (minutes, 0 = manual only)" Style="{StaticResource Caption}" Margin="0,12,0,5" />
+                        <TextBox Text="{Binding DiscoveryIntervalMinutes, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+                        <TextBlock Text="Probe ports (comma separated)" Style="{StaticResource Caption}" Margin="0,12,0,5" />
+                        <TextBox Text="{Binding DiscoveryProbePorts, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Agent policy">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,14,0,0">
+                    <StackPanel MaxWidth="620" HorizontalAlignment="Left">
+                        <TextBlock Text="Enrollment and file access" Style="{StaticResource H2}" />
+                        <TextBlock Text="Enrollment requires a single-use token. By default an administrator must also approve each new agent."
+                                   Style="{StaticResource Muted}" Margin="0,4,0,16" />
+                        <CheckBox Content="Automatically approve agents with a valid enrollment token" Style="{StaticResource AppCheckBox}"
+                                  IsChecked="{Binding AgentAutoApprove}" Margin="0,0,0,10" />
+                        <CheckBox Content="Permit remote commands and file transfer on approved agents" Style="{StaticResource AppCheckBox}"
+                                  IsChecked="{Binding AgentAllowCommands}" Margin="0,0,0,16" />
+                        <TextBlock Text="Permitted file-transfer roots (one per line or semicolon separated)" Style="{StaticResource Caption}" Margin="0,0,0,5" />
+                        <TextBox Text="{Binding AgentAllowedRoots, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}"
+                                 Height="110" AcceptsReturn="True" TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" />
+                        <TextBlock Text="The agent refuses paths outside these roots, system folders, junctions and UNC paths regardless of hub permissions."
+                                   Style="{StaticResource Caption}" Margin="0,6,0,0" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Security">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,14,0,0">
+                    <StackPanel MaxWidth="680" HorizontalAlignment="Left">
+                        <TextBlock Text="Audit and sessions" Style="{StaticResource H2}" />
+                        <TextBlock Text="The audit log is an append-only SHA-256 hash chain. Purging old entries is a separate, explicit action on the Audit Log page."
+                                   Style="{StaticResource Muted}" Margin="0,4,0,16" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Audit retention (days)" Style="{StaticResource Caption}" Margin="0,0,0,5" />
+                                <TextBox Text="{Binding AuditRetentionDays, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Session timeout (minutes)" Style="{StaticResource Caption}" Margin="0,0,0,5" />
+                                <TextBox Text="{Binding SessionTimeoutMinutes, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}" />
+                            </StackPanel>
+                        </Grid>
+                        <CheckBox Content="Require TLS for all hub and agent traffic" Style="{StaticResource AppCheckBox}"
+                                  IsChecked="{Binding RequireTls}" IsEnabled="False" Margin="0,14,0,0" />
+                        <TextBlock Text="TLS is always enforced in this release and cannot be disabled from the console."
+                                   Style="{StaticResource Caption}" Margin="0,4,0,0" />
+
+                        <Border Height="1" Background="{StaticResource BorderBrush}" Margin="0,20,0,16" />
+                        <TextBlock Text="Remote command policy" Style="{StaticResource H3}" Margin="0,0,0,10" />
+                        <CheckBox Content="Block critical commands unless explicitly allowlisted" Style="{StaticResource AppCheckBox}"
+                                  IsChecked="{Binding CommandBlocklistEnabled}" />
+                        <TextBlock Text="Format, diskpart, boot configuration, event-log clearing, service deletion and similar operations are refused before they reach an agent. A blocked command is written to the audit log with result Blocked."
+                                   Style="{StaticResource Caption}" TextWrapping="Wrap" Margin="0,4,0,12" />
+                        <TextBlock Text="Command allowlist (one exact command per line)" Style="{StaticResource Caption}" Margin="0,0,0,5" />
+                        <TextBox Text="{Binding CommandAllowlist, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource AppTextBox}" Height="110"
+                                 AcceptsReturn="True" TextWrapping="NoWrap"
+                                 VerticalScrollBarVisibility="Auto" />
+                        <TextBlock Text="Only an exact, whitespace-normalised match bypasses the critical blocklist. Every change to this list is audited. Leave it empty to block all critical commands."
+                                   Style="{StaticResource Caption}" TextWrapping="Wrap" Margin="0,4,0,12" />
+                        <CheckBox Content="Require a second administrator to approve destructive or critical commands" Style="{StaticResource AppCheckBox}"
+                                  IsChecked="{Binding CommandApprovalRequired}" />
+                        <TextBlock Text="When enabled, a destructive or critical command creates a 15-minute approval request. A different administrator approves it in Commands > Approval queue; the requester then runs the approved command. The request, decision and execution are audited."
+                                   Style="{StaticResource Caption}" TextWrapping="Wrap" Margin="0,4,0,0" />
+
+                        <Border Height="1" Background="{StaticResource BorderBrush}" Margin="0,20,0,16" />
+                        <TextBlock Text="Remote assistance policy" Style="{StaticResource H3}" Margin="0,0,0,10" />
+                        <CheckBox Content="Require an explicit target-consent confirmation before every remote session"
+                                  Style="{StaticResource AppCheckBox}"
+                                  IsChecked="{Binding RemoteConsentRequired}" />
+                        <TextBlock Text="When off (the default for a personally managed network), launches start immediately and the operator account, tool, target and time are still written to the audit log. Turn this on when the target user must be asked before each session. The hub never stores tool passwords or Quick Assist codes."
+                                   Style="{StaticResource Caption}" TextWrapping="Wrap" Margin="0,4,0,12" />
+                        <TextBlock Text="Off-box audit anchor file (optional, local or UNC path)" Style="{StaticResource Caption}" Margin="0,0,0,5" />
+                        <TextBox Text="{Binding AuditAnchorPath, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource AppTextBox}"
+                                 ToolTip="Example: \\fileserver\audit\RemoteDesk\hub-audit.log" />
+                        <TextBlock Text="When set, every audit record is appended to this file after the database commit. A UNC path keeps a second copy off this computer. Leave empty to disable. The file is append-only from the hub's perspective; protect it with share and NTFS permissions."
+                                   Style="{StaticResource Caption}" TextWrapping="Wrap" Margin="0,4,0,12" />
+
+                        <Border Height="1" Background="{StaticResource BorderBrush}" Margin="0,20,0,16" />
+                        <TextBlock Text="Certificate authority" Style="{StaticResource H3}" Margin="0,0,0,10" />
+                        <TextBlock Text="Server certificate" Style="{StaticResource Caption}" />
+                        <TextBlock Text="{Binding ServerThumbprint}" Style="{StaticResource Mono}" TextWrapping="Wrap" Margin="0,2,0,8" />
+                        <TextBlock Text="Console client certificate" Style="{StaticResource Caption}" />
+                        <TextBlock Text="{Binding ClientThumbprint}" Style="{StaticResource Mono}" TextWrapping="Wrap" Margin="0,2,0,8" />
+                        <TextBlock Text="Root CA certificate" Style="{StaticResource Caption}" />
+                        <TextBlock Text="{Binding CaThumbprint}" Style="{StaticResource Mono}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Storage &amp; backups">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,14,0,0">
+                    <StackPanel MaxWidth="680" HorizontalAlignment="Left">
+                        <TextBlock Text="Local storage" Style="{StaticResource H2}" />
+                        <TextBlock Text="{Binding DataRoot}" Style="{StaticResource Mono}" TextWrapping="Wrap" Margin="0,6,0,10" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                            <Button Content="Open data folder" Style="{StaticResource SecondaryButton}" Command="{Binding OpenDataFolderCommand}" />
+                            <Button Content="Open logs" Style="{StaticResource GhostButton}" Command="{Binding OpenLogsFolderCommand}" Margin="8,0,0,0" />
+                        </StackPanel>
+
+                        <Border Height="1" Background="{StaticResource BorderBrush}" Margin="0,4,0,16" />
+                        <TextBlock Text="Database backups" Style="{StaticResource H3}" />
+                        <TextBlock Text="{Binding BackupStatus}" Style="{StaticResource Muted}" Margin="0,6,0,12" TextWrapping="Wrap" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Button Content="Create backup" Style="{StaticResource PrimaryButton}" Command="{Binding CreateBackupCommand}"
+                                    IsEnabled="{Binding CanBackup}" />
+                            <Button Content="Restore selected" Style="{StaticResource DangerButton}" Command="{Binding RestoreBackupCommand}"
+                                    IsEnabled="{Binding CanBackup}" Margin="8,0,0,0" />
+                            <Button Content="Verify database" Style="{StaticResource SecondaryButton}" Command="{Binding VerifyDatabaseCommand}"
+                                    IsEnabled="{Binding CanBackup}" Margin="8,0,0,0" />
+                        </StackPanel>
+                        <ListBox Style="{StaticResource AppListBox}" ItemContainerStyle="{StaticResource AppListBoxItem}"
+                                 ItemsSource="{Binding Backups}" SelectedItem="{Binding SelectedBackup}" Height="220">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding LastWriteTime}" Style="{StaticResource Caption}" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Text="{Binding Length, Converter={StaticResource BytesToText}}"
+                                                   Style="{StaticResource Caption}" VerticalAlignment="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <TextBlock Text="Backups are SQLite copies stored in the backups folder. Restoring requires an application restart."
+                                   Style="{StaticResource Caption}" Margin="0,8,0,0" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

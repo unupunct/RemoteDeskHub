@@ -1,0 +1,135 @@
+<UserControl x:Class="RemoteDeskHub.Desktop.Views.CommandsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="clr-namespace:RemoteDeskHub.Core.Models;assembly=RemoteDeskHub.Core"
+             Background="Transparent">
+    <Grid Margin="26,20,26,22">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="2*" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal">
+                <ComboBox ItemsSource="{Binding Computers}" SelectedItem="{Binding SelectedComputer}" DisplayMemberPath="DisplayName"
+                          Style="{StaticResource AppComboBox}" Width="250" Height="36" />
+                <ComboBox ItemsSource="{Binding Shells}" SelectedItem="{Binding Shell}" Style="{StaticResource AppComboBox}"
+                          Width="150" Height="36" Margin="8,0,0,0" />
+                <TextBlock Text="Timeout (s)" Style="{StaticResource Caption}" VerticalAlignment="Center" Margin="12,0,6,0" />
+                <TextBox Text="{Binding TimeoutSeconds, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}"
+                         Width="80" Height="36" />
+                <CheckBox Content="Runs as LocalSystem" Style="{StaticResource AppCheckBox}" IsChecked="True" IsEnabled="False"
+                          VerticalAlignment="Center" Margin="12,0,0,0"
+                          ToolTip="Every agent command runs under the agent's LocalSystem service identity." />
+            </StackPanel>
+            <Button Content="Run command" Style="{StaticResource PrimaryButton}" Command="{Binding ExecuteCommand}"
+                    IsEnabled="{Binding CanRun}" HorizontalAlignment="Right" />
+        </Grid>
+
+        <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,0,0,12" Padding="14">
+            <TextBox Text="{Binding CommandText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}"
+                     Height="86" AcceptsReturn="True" TextWrapping="NoWrap" FontFamily="{StaticResource MonoFont}"
+                     VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" />
+        </Border>
+
+        <Border Grid.Row="2" Style="{StaticResource Card}" Padding="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0" Margin="16,12,16,6">
+                    <TextBlock Text="{Binding ResultSummary}" Style="{StaticResource Caption}" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Clear output" Style="{StaticResource GhostButton}" FontSize="11" Command="{Binding ClearOutputCommand}" />
+                    </StackPanel>
+                </Grid>
+                <TabControl Grid.Row="1" Style="{StaticResource AppTabControl}" ItemContainerStyle="{StaticResource AppTabItem}" Margin="10,0,10,8">
+                    <TabItem Header="Output">
+                        <TextBox Text="{Binding StdOut, Mode=OneWay}" Style="{StaticResource AppTextBox}" IsReadOnly="True"
+                                 AcceptsReturn="True" TextWrapping="NoWrap" FontFamily="{StaticResource MonoFont}"
+                                 VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" />
+                    </TabItem>
+                    <TabItem Header="Errors">
+                        <TextBox Text="{Binding StdErr, Mode=OneWay}" Style="{StaticResource AppTextBox}" IsReadOnly="True"
+                                 AcceptsReturn="True" TextWrapping="Wrap" FontFamily="{StaticResource MonoFont}"
+                                 VerticalScrollBarVisibility="Auto" Foreground="#FCA5A5" />
+                    </TabItem>
+                </TabControl>
+            </Grid>
+        </Border>
+
+        <TabControl Grid.Row="4" Style="{StaticResource AppTabControl}" ItemContainerStyle="{StaticResource AppTabItem}">
+            <TabItem Header="Command history">
+                <Grid Margin="0,8,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Margin="0,0,0,6">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Command history" Style="{StaticResource H3}" VerticalAlignment="Center" />
+                            <Button Content="Refresh" Style="{StaticResource GhostButton}" Margin="10,0,0,0" Command="{Binding RefreshHistoryCommand}" />
+                            <Button Content="Cancel selected" Style="{StaticResource DangerButton}" Command="{Binding CancelCommandCommand}"
+                                    IsEnabled="{Binding CanRun}" Margin="4,0,0,0" />
+                        </StackPanel>
+                        <Button Content="Export history" Style="{StaticResource GhostButton}" HorizontalAlignment="Right"
+                                Command="{Binding ExportHistoryCommand}" />
+                    </Grid>
+                    <DataGrid Grid.Row="1" Style="{StaticResource AppDataGrid}" ItemsSource="{Binding History}"
+                              SelectedItem="{Binding SelectedHistory}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Computer" Binding="{Binding ComputerName}" Width="170" />
+                            <DataGridTextColumn Header="Command" Binding="{Binding Command}" Width="*" />
+                            <DataGridTextColumn Header="Shell" Binding="{Binding Shell}" Width="110" />
+                            <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100" />
+                            <DataGridTextColumn Header="Exit" Binding="{Binding ExitCode}" Width="60" />
+                            <DataGridTextColumn Header="Actor" Binding="{Binding Actor}" Width="130" />
+                            <DataGridTextColumn Header="Started" Binding="{Binding StartedUtc, Converter={StaticResource UtcToLocal}}" Width="140" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Approval queue">
+                <Grid Margin="0,8,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Margin="0,0,0,6">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Pending command approvals" Style="{StaticResource H3}" VerticalAlignment="Center" />
+                            <Button Content="Refresh" Style="{StaticResource GhostButton}" Margin="10,0,0,0"
+                                    Command="{Binding RefreshApprovalsCommand}" />
+                        </StackPanel>
+                        <TextBlock Text="A second administrator must approve destructive commands when the approval policy is enabled."
+                                   Style="{StaticResource Caption}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                    </Grid>
+                    <DataGrid Grid.Row="1" Style="{StaticResource AppDataGrid}" ItemsSource="{Binding Approvals}"
+                              SelectedItem="{Binding SelectedApproval}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Computer" Binding="{Binding ComputerName}" Width="150" />
+                            <DataGridTextColumn Header="Command" Binding="{Binding Command}" Width="*" />
+                            <DataGridTextColumn Header="Shell" Binding="{Binding Shell}" Width="100" />
+                            <DataGridTextColumn Header="Requested by" Binding="{Binding RequestedBy}" Width="130" />
+                            <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100" />
+                            <DataGridTextColumn Header="Expires" Binding="{Binding ExpiresUtc, Converter={StaticResource UtcToLocal}}" Width="140" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Content="Approve selected" Style="{StaticResource SecondaryButton}"
+                                Command="{Binding ApproveSelectedCommand}" IsEnabled="{Binding CanApprove}" />
+                        <Button Content="Reject selected" Style="{StaticResource DangerButton}" Margin="6,0,0,0"
+                                Command="{Binding RejectSelectedCommand}" IsEnabled="{Binding CanApprove}" />
+                        <Button Content="Run approved command" Style="{StaticResource PrimaryButton}" Margin="6,0,0,0"
+                                Command="{Binding RunApprovedCommand}" IsEnabled="{Binding CanRunSelectedApproval}" />
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

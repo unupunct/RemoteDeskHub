@@ -1,0 +1,323 @@
+<Window x:Class="RemoteDeskHub.Desktop.Views.FirstRunWizard"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="RemoteDesk Hub · First-run setup"
+        Width="1060" Height="760" MinWidth="940" MinHeight="680"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource WindowBackgroundBrush}"
+        Foreground="{StaticResource TextPrimaryBrush}"
+        FontFamily="{StaticResource AppFont}"
+        Icon="/Assets/RemoteDeskHub.ico">
+    <Grid Margin="28,22,28,18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="4,0,4,18">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Border Width="42" Height="42" CornerRadius="10" Background="{StaticResource AccentGradientBrush}">
+                <TextBlock Text="R" FontSize="22" FontWeight="Bold" Foreground="#0B1220"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="Welcome to RemoteDesk Hub" Style="{StaticResource H2}" />
+                <TextBlock Text="Secure LAN management for Windows computers" Style="{StaticResource Muted}" />
+            </StackPanel>
+            <TextBlock x:Name="StepCounter" Grid.Column="2" Style="{StaticResource Caption}"
+                       VerticalAlignment="Center" FontSize="12" />
+        </Grid>
+
+        <Border Grid.Row="1" Style="{StaticResource Card}" Padding="0">
+            <TabControl x:Name="Steps" Style="{StaticResource AppTabControl}" Margin="10,8,10,10"
+                        ItemContainerStyle="{StaticResource AppTabItem}" SelectionChanged="Steps_SelectionChanged">
+
+                <!-- 1. Welcome -->
+                <TabItem Header="1 · Welcome">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="12,18,12,0">
+                        <StackPanel MaxWidth="720" HorizontalAlignment="Left">
+                            <TextBlock Text="A private management console for your local network" Style="{StaticResource H1}" />
+                            <TextBlock Style="{StaticResource Body}" Margin="0,12,0,0" LineHeight="21"
+                                       Text="RemoteDesk Hub discovers Windows computers on private LAN subnets, monitors their health, and provides auditable remote administration through a companion Windows service (RemoteDesk Agent)." />
+
+                            <Border Style="{StaticResource Card}" Background="{StaticResource SurfaceAltBrush}" Margin="0,22,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="What setup will configure" Style="{StaticResource H3}" />
+                                    <TextBlock Style="{StaticResource Muted}" Margin="0,10,0,0" LineHeight="21"
+                                               Text="• A local administrator account (PBKDF2-SHA256, 210,000 iterations)&#x0a;• The hub HTTPS listener and agent management port&#x0a;• A private certificate authority for mutual TLS&#x0a;• Data, log and backup locations&#x0a;• Discovery defaults and performance alert thresholds&#x0a;• Agent approval policy and permitted file-transfer roots" />
+                                </StackPanel>
+                            </Border>
+
+                            <TextBlock Style="{StaticResource Caption}" Margin="0,18,0,0"
+                                       Text="This wizard runs once. Every value can be changed later in Settings. No credentials are ever hardcoded or sent outside this computer." />
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- 2. Administrator -->
+                <TabItem Header="2 · Administrator">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="12,18,12,0">
+                        <StackPanel MaxWidth="520" HorizontalAlignment="Left">
+                            <TextBlock Text="Create the first administrator" Style="{StaticResource H1}" />
+                            <TextBlock Style="{StaticResource Muted}" Margin="0,8,0,22"
+                                       Text="This account has full control, including users, security settings, agent approval and backups." />
+
+                            <TextBlock Text="User name" Style="{StaticResource Caption}" Margin="0,0,0,6" />
+                            <TextBox x:Name="AdminUserBox" Style="{StaticResource AppTextBox}" Height="38" Text="admin" />
+
+                            <TextBlock Text="Password" Style="{StaticResource Caption}" Margin="0,16,0,6" />
+                            <PasswordBox x:Name="AdminPasswordBox" Style="{StaticResource AppPasswordBox}" Height="38" />
+
+                            <TextBlock Text="Confirm password" Style="{StaticResource Caption}" Margin="0,16,0,6" />
+                            <PasswordBox x:Name="AdminConfirmBox" Style="{StaticResource AppPasswordBox}" Height="38" />
+
+                            <Border Style="{StaticResource Card}" Background="{StaticResource SurfaceAltBrush}" Margin="0,18,0,0" Padding="14">
+                                <TextBlock Style="{StaticResource Muted}" LineHeight="20"
+                                           Text="At least 10 characters, including an upper-case letter, a lower-case letter and a digit. Passwords are salted and hashed; they are never written to logs." />
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- 3. Network -->
+                <TabItem Header="3 · Network">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="12,18,12,0">
+                        <StackPanel MaxWidth="560" HorizontalAlignment="Left">
+                            <TextBlock Text="Hub and agent network settings" Style="{StaticResource H1}" />
+                            <TextBlock Style="{StaticResource Muted}" Margin="0,8,0,20"
+                                       Text="The hub listens over HTTPS (TLS 1.3). Agents connect to the enrollment and heartbeat endpoints; the hub calls each agent's management port for commands, files and inventory." />
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="18" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Hub HTTPS port" Style="{StaticResource Caption}" Margin="0,0,0,6" />
+                                    <TextBox x:Name="HubPortBox" Style="{StaticResource AppTextBox}" Text="7443" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Agent management port" Style="{StaticResource Caption}" Margin="0,0,0,6" />
+                                    <TextBox x:Name="AgentPortBox" Style="{StaticResource AppTextBox}" Text="7444" />
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock Text="Hub URL (used in agent pairing packages)" Style="{StaticResource Caption}" Margin="0,16,0,6" />
+                            <TextBox x:Name="HubUrlBox" Style="{StaticResource AppTextBox}" />
+
+                            <TextBlock Text="Bind address" Style="{StaticResource Caption}" Margin="0,16,0,6" />
+                            <ComboBox x:Name="BindAddressBox" Style="{StaticResource AppComboBox}" Height="36" IsEditable="True" SelectedIndex="0">
+                                <ComboBoxItem Content="0.0.0.0" />
+                                <ComboBoxItem Content="127.0.0.1" />
+                            </ComboBox>
+
+                            <Border Style="{StaticResource Card}" Background="{StaticResource SurfaceAltBrush}" Margin="0,18,0,0" Padding="14">
+                                <TextBlock Style="{StaticResource Muted}" LineHeight="20"
+                                           Text="0.0.0.0 allows agents elsewhere on the LAN to reach this hub. 127.0.0.1 restricts the hub to this computer. Windows Firewall rules must allow the chosen ports." />
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- 4. TLS -->
+                <TabItem Header="4 · Security">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="12,18,12,0">
+                        <StackPanel MaxWidth="620" HorizontalAlignment="Left">
+                            <TextBlock Text="Mutual TLS with a private certificate authority" Style="{StaticResource H1}" />
+                            <TextBlock Style="{StaticResource Body}" Margin="0,10,0,0" LineHeight="21"
+                                       Text="RemoteDesk Hub creates a private RSA-4096 root certificate and uses it to issue short-lived certificates for this hub and for each enrolled agent. Every agent is pinned to its issued thumbprint and can be revoked individually." />
+
+                            <Border Style="{StaticResource Card}" Background="{StaticResource SurfaceAltBrush}" Margin="0,18,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Security model" Style="{StaticResource H3}" />
+                                    <TextBlock Style="{StaticResource Muted}" Margin="0,8,0,0" LineHeight="21"
+                                               Text="• TLS 1.3 only; the hub rejects clients without a CA-issued client certificate&#x0a;• Private keys are protected with Windows DPAPI (per-user for the hub, machine scope for the agent)&#x0a;• Agent enrollment requires a single-use token and administrator approval by default&#x0a;• Commands and file operations are permission-checked and audited in a hash chain&#x0a;• Secrets are never written to logs or configuration files" />
+                                </StackPanel>
+                            </Border>
+
+                            <Button x:Name="CaButton" Content="Create certificate authority now" Style="{StaticResource SecondaryButton}"
+                                    Margin="0,18,0,0" HorizontalAlignment="Left" Click="InitializeCa_Click" />
+                            <TextBlock x:Name="CaStatusText" Style="{StaticResource Muted}" Margin="0,12,0,0"
+                                       Text="The certificate authority is created automatically when you finish setup." />
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- 5. Data -->
+                <TabItem Header="5 · Storage">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="12,18,12,0">
+                        <StackPanel MaxWidth="680" HorizontalAlignment="Left">
+                            <TextBlock Text="Where your data lives" Style="{StaticResource H1}" />
+                            <TextBlock Style="{StaticResource Muted}" Margin="0,8,0,18"
+                                       Text="All state stays on this computer. Set the REMOTEDESKHUB_DATA environment variable before launching to relocate the data root." />
+
+                            <TextBlock Text="Data root" Style="{StaticResource Caption}" />
+                            <TextBox x:Name="DataPathText" Style="{StaticResource AppTextBox}" IsReadOnly="True" Margin="0,4,0,0" />
+
+                            <TextBlock Text="Database" Style="{StaticResource Caption}" Margin="0,14,0,0" />
+                            <TextBox x:Name="DatabasePathText" Style="{StaticResource AppTextBox}" IsReadOnly="True" Margin="0,4,0,0" />
+
+                            <Grid Margin="0,14,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="12" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Logs" Style="{StaticResource Caption}" />
+                                    <TextBox x:Name="LogsPathText" Style="{StaticResource AppTextBox}" IsReadOnly="True" Margin="0,4,0,0" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Backups" Style="{StaticResource Caption}" />
+                                    <TextBox x:Name="BackupsPathText" Style="{StaticResource AppTextBox}" IsReadOnly="True" Margin="0,4,0,0" />
+                                </StackPanel>
+                            </Grid>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,18,0,0">
+                                <Button Content="Open data folder" Style="{StaticResource SecondaryButton}" Click="OpenDataFolder_Click" />
+                                <Button Content="Open logs" Style="{StaticResource GhostButton}" Margin="10,0,0,0" Click="OpenLogsFolder_Click" />
+                                <Button Content="Open backups" Style="{StaticResource GhostButton}" Margin="4,0,0,0" Click="OpenBackupsFolder_Click" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- 6. Discovery -->
+                <TabItem Header="6 · Discovery">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="12,18,12,0">
+                        <StackPanel MaxWidth="560" HorizontalAlignment="Left">
+                            <TextBlock Text="Network discovery defaults" Style="{StaticResource H1}" />
+                            <TextBlock Style="{StaticResource Muted}" Margin="0,8,0,20"
+                                       Text="Discovery probes private IPv4 ranges only. Scans are limited to /24 per local subnet and at most 4096 hosts per run." />
+
+                            <TextBlock Text="Probe timeout (milliseconds)" Style="{StaticResource Caption}" Margin="0,0,0,6" />
+                            <TextBox x:Name="DiscoveryTimeoutBox" Style="{StaticResource AppTextBox}" Text="800" />
+
+                            <TextBlock Text="Concurrent probes" Style="{StaticResource Caption}" Margin="0,14,0,6" />
+                            <TextBox x:Name="DiscoveryConcurrencyBox" Style="{StaticResource AppTextBox}" Text="24" />
+
+                            <TextBlock Text="Automatic scan interval (minutes, 0 = manual only)" Style="{StaticResource Caption}" Margin="0,14,0,6" />
+                            <TextBox x:Name="DiscoveryIntervalBox" Style="{StaticResource AppTextBox}" Text="0" />
+
+                            <TextBlock Text="TCP probe ports (comma separated)" Style="{StaticResource Caption}" Margin="0,14,0,6" />
+                            <TextBox x:Name="DiscoveryPortsBox" Style="{StaticResource AppTextBox}" Text="7444,445,3389" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- 7. Alerts -->
+                <TabItem Header="7 · Alerts">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="12,18,12,0">
+                        <StackPanel MaxWidth="560" HorizontalAlignment="Left">
+                            <TextBlock Text="Performance alert thresholds" Style="{StaticResource H1}" />
+                            <TextBlock Style="{StaticResource Muted}" Margin="0,8,0,20"
+                                       Text="Alerts are deduplicated per computer and metric and resolve automatically when the metric recovers." />
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="16" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="CPU warning (%)" Style="{StaticResource Caption}" Margin="0,0,0,6" />
+                                    <TextBox x:Name="CpuThresholdBox" Style="{StaticResource AppTextBox}" Text="90" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Memory warning (%)" Style="{StaticResource Caption}" Margin="0,0,0,6" />
+                                    <TextBox x:Name="MemoryThresholdBox" Style="{StaticResource AppTextBox}" Text="92" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid Margin="0,14,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="16" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Minimum free disk (%)" Style="{StaticResource Caption}" Margin="0,0,0,6" />
+                                    <TextBox x:Name="DiskThresholdBox" Style="{StaticResource AppTextBox}" Text="10" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="CPU temperature (°C)" Style="{StaticResource Caption}" Margin="0,0,0,6" />
+                                    <TextBox x:Name="TemperatureThresholdBox" Style="{StaticResource AppTextBox}" Text="85" />
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock Style="{StaticResource Caption}" Margin="0,18,0,0"
+                                       Text="Built-in rules use these values as defaults. Individual rules can be scoped to a computer or group later." />
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- 8. Agent policy -->
+                <TabItem Header="8 · Agents">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="12,18,12,0">
+                        <StackPanel MaxWidth="620" HorizontalAlignment="Left">
+                            <TextBlock Text="Agent enrollment and file access" Style="{StaticResource H1}" />
+                            <TextBlock Style="{StaticResource Muted}" Margin="0,8,0,18"
+                                       Text="Agents are installed separately as a Windows service. Each one must be enrolled with a single-use token before it can be managed." />
+
+                            <CheckBox x:Name="AutoApproveBox" Style="{StaticResource AppCheckBox}" Content="Automatically approve agents that present a valid enrollment token" />
+                            <TextBlock Style="{StaticResource Caption}" Margin="26,4,0,12"
+                                       Text="Recommended: leave unchecked so an administrator reviews every new agent." />
+
+                            <CheckBox x:Name="AllowCommandsBox" Style="{StaticResource AppCheckBox}" IsChecked="True"
+                                      Content="Allow remote command execution and file transfer on approved agents" />
+
+                            <TextBlock Text="Permitted file-transfer roots (one per line)" Style="{StaticResource Caption}" Margin="0,18,0,6" />
+                            <TextBox x:Name="AllowedRootsBox" Style="{StaticResource AppTextBox}" Height="96"
+                                     AcceptsReturn="True" TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto"
+                                     Text="C:\Users&#x0a;C:\ProgramData" />
+
+                            <TextBlock Style="{StaticResource Caption}" Margin="0,10,0,0"
+                                       Text="Paths outside these roots are rejected by the agent, even for administrators. System locations, junctions and network paths are always blocked." />
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- 9. Summary -->
+                <TabItem Header="9 · Finish">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="12,18,12,0">
+                        <StackPanel MaxWidth="720" HorizontalAlignment="Left">
+                            <TextBlock Text="Ready to launch" Style="{StaticResource H1}" />
+                            <TextBlock Style="{StaticResource Muted}" Margin="0,8,0,16"
+                                       Text="Review the configuration below, then finish setup. You will sign in with the administrator account you created." />
+                            <Border Style="{StaticResource Card}" Background="{StaticResource SurfaceAltBrush}">
+                                <TextBlock x:Name="SummaryText" Style="{StaticResource Mono}" LineHeight="21"
+                                           Text="Complete the previous steps to see a summary." />
+                            </Border>
+                            <TextBlock Style="{StaticResource Caption}" Margin="0,16,0,0"
+                                       Text="Next: open Settings → Agent enrollment to generate a pairing package, then install RemoteDesk Agent on a target computer." />
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+            </TabControl>
+        </Border>
+
+        <!-- Footer -->
+        <Grid Grid.Row="2" Margin="4,16,4,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="WizardError" Visibility="Collapsed" Foreground="{StaticResource DangerBrush}"
+                       FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="620" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button x:Name="CancelButton" Content="Cancel" Style="{StaticResource GhostButton}" Click="Cancel_Click" />
+                <Button x:Name="BackButton" Content="Back" Style="{StaticResource SecondaryButton}" Margin="10,0,0,0" Click="Back_Click" />
+                <Button x:Name="FinishButton" Content="Finish setup" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0"
+                        Visibility="Collapsed" Click="Finish_Click" />
+                <Button x:Name="NextButton" Content="Next" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0" Click="Next_Click" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

@@ -1,0 +1,16 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+artifacts/
+publish/
+*.db
+*.db-shm
+*.db-wal
+logs/
+TestResults/
+installer/**/obj/
+installer/**/bin/
+*.msi
+*.wixpdb

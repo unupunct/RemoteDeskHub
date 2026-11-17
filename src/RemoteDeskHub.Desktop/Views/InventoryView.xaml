@@ -1,0 +1,228 @@
+<UserControl x:Class="RemoteDeskHub.Desktop.Views.InventoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:proto="clr-namespace:RemoteDeskHub.Shared.Protocol;assembly=RemoteDeskHub.Shared"
+             xmlns:domain="clr-namespace:RemoteDeskHub.Core.Domain;assembly=RemoteDeskHub.Core"
+             Background="Transparent">
+    <Grid Margin="26,20,26,22">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,14">
+            <StackPanel Orientation="Horizontal">
+                <ComboBox ItemsSource="{Binding Computers}" SelectedItem="{Binding SelectedComputer}" DisplayMemberPath="DisplayName"
+                          Style="{StaticResource AppComboBox}" Width="250" Height="36" />
+                <Button Content="Refresh hardware" Style="{StaticResource SecondaryButton}" Command="{Binding RefreshHardwareCommand}"
+                        IsEnabled="{Binding CanManage}" Margin="8,0,0,0" />
+                <Button Content="Refresh software" Style="{StaticResource SecondaryButton}" Command="{Binding RefreshSoftwareCommand}"
+                        IsEnabled="{Binding CanManage}" Margin="6,0,0,0" />
+                <Button Content="Refresh view" Style="{StaticResource GhostButton}" Command="{Binding RefreshCommand}" />
+            </StackPanel>
+            <TextBlock Text="{Binding HardwareCollectedText}" Style="{StaticResource Caption}"
+                       HorizontalAlignment="Right" VerticalAlignment="Center" />
+        </Grid>
+
+        <TabControl Grid.Row="1" Style="{StaticResource AppTabControl}" ItemContainerStyle="{StaticResource AppTabItem}">
+            <TabItem Header="Hardware">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,10,0,0">
+                    <StackPanel>
+                        <UniformGrid Columns="4" Margin="0,0,0,14">
+                            <Border Style="{StaticResource Card}" Margin="0,0,6,0">
+                                <StackPanel>
+                                    <TextBlock Text="CPU" Style="{StaticResource Caption}" />
+                                    <TextBlock Text="{Binding Hardware.CpuModel, FallbackValue=Not collected}" Style="{StaticResource H3}"
+                                               TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding Hardware.CpuManufacturer}" Style="{StaticResource Caption}" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource Card}" Margin="6,0">
+                                <StackPanel>
+                                    <TextBlock Text="Cores / threads" Style="{StaticResource Caption}" />
+                                    <TextBlock Style="{StaticResource H3}">
+                                        <Run Text="{Binding Hardware.CpuCores, Mode=OneWay, FallbackValue=0}" />
+                                        <Run Text=" / " />
+                                        <Run Text="{Binding Hardware.CpuLogicalProcessors, Mode=OneWay, FallbackValue=0}" />
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Hardware.CpuMaxClockMhz, StringFormat='{}{0} MHz'}" Style="{StaticResource Caption}" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource Card}" Margin="6,0">
+                                <StackPanel>
+                                    <TextBlock Text="Memory" Style="{StaticResource Caption}" />
+                                    <TextBlock Text="{Binding Hardware.RamTotalBytes, Converter={StaticResource BytesToText}, FallbackValue=—}"
+                                               Style="{StaticResource H3}" />
+                                    <TextBlock Text="{Binding Hardware.RamAvailableBytes, Converter={StaticResource BytesToText}, StringFormat='Available {0}'}"
+                                               Style="{StaticResource Caption}" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource Card}" Margin="6,0,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Motherboard" Style="{StaticResource Caption}" />
+                                    <TextBlock Text="{Binding Hardware.MotherboardModel, FallbackValue=Not collected}" Style="{StaticResource H3}"
+                                               TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding Hardware.BiosVersion, StringFormat='BIOS {0}'}" Style="{StaticResource Caption}" />
+                                </StackPanel>
+                            </Border>
+                        </UniformGrid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel>
+                                <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                                    <StackPanel>
+                                        <TextBlock Text="Storage" Style="{StaticResource H3}" Margin="0,0,0,8" />
+                                        <ItemsControl ItemsSource="{Binding Hardware.Disks}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="{x:Type proto:DiskInfoDto}">
+                                                    <Grid Margin="0,3">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding Model}" FontSize="12.5" FontWeight="SemiBold" />
+                                                            <TextBlock Text="{Binding FileSystem}" Style="{StaticResource Caption}" />
+                                                        </StackPanel>
+                                                        <TextBlock Grid.Column="1" Text="{Binding SizeBytes, Converter={StaticResource BytesToText}}"
+                                                                   Style="{StaticResource Body}" VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock Text="No disk information collected." Style="{StaticResource Caption}"
+                                                   Visibility="{Binding Hardware.Disks.Count, Converter={StaticResource ZeroToCollapsed}}" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <TextBlock Text="Graphics" Style="{StaticResource H3}" Margin="0,0,0,8" />
+                                        <ItemsControl ItemsSource="{Binding Hardware.Gpus}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="{x:Type proto:GpuInfoDto}">
+                                                    <StackPanel Margin="0,3">
+                                                        <TextBlock Text="{Binding Model}" FontSize="12.5" FontWeight="SemiBold" />
+                                                        <TextBlock Text="{Binding DriverVersion, StringFormat='Driver {0}'}" Style="{StaticResource Caption}" />
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock Text="No graphics adapter reported." Style="{StaticResource Caption}"
+                                                   Visibility="{Binding Hardware.Gpus.Count, Converter={StaticResource ZeroToCollapsed}}" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                                    <StackPanel>
+                                        <TextBlock Text="Network adapters" Style="{StaticResource H3}" Margin="0,0,0,8" />
+                                        <ItemsControl ItemsSource="{Binding Hardware.Adapters}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="{x:Type proto:NetworkAdapterInfoDto}">
+                                                    <StackPanel Margin="0,3">
+                                                        <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold" />
+                                                        <TextBlock Text="{Binding MacAddress}" Style="{StaticResource Caption}" />
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock Text="No adapters reported." Style="{StaticResource Caption}"
+                                                   Visibility="{Binding Hardware.Adapters.Count, Converter={StaticResource ZeroToCollapsed}}" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <TextBlock Text="Memory modules" Style="{StaticResource H3}" Margin="0,0,0,8" />
+                                        <ItemsControl ItemsSource="{Binding Hardware.MemoryModules}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="{x:Type proto:MemoryModuleDto}">
+                                                    <Grid Margin="0,3">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding Slot}" FontSize="12.5" FontWeight="SemiBold" />
+                                                            <TextBlock Text="{Binding SpeedMhz, StringFormat='{}{0} MHz'}" Style="{StaticResource Caption}" />
+                                                        </StackPanel>
+                                                        <TextBlock Grid.Column="1" Text="{Binding CapacityBytes, Converter={StaticResource BytesToText}}"
+                                                                   Style="{StaticResource Body}" VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock Text="No module details collected." Style="{StaticResource Caption}"
+                                                   Visibility="{Binding Hardware.MemoryModules.Count, Converter={StaticResource ZeroToCollapsed}}" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Software">
+                <Grid Margin="0,10,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AppTextBox}"
+                                 Width="250" ToolTip="Search installed software" />
+                        <ComboBox ItemsSource="{Binding Publishers}" SelectedItem="{Binding SelectedPublisher}"
+                                  Style="{StaticResource AppComboBox}" Width="220" Margin="8,0,0,0" />
+                        <Button Content="Filter" Style="{StaticResource SecondaryButton}" Command="{Binding SearchSoftwareCommand}" Margin="8,0,0,0" />
+                        <Button Content="Clear" Style="{StaticResource GhostButton}" Command="{Binding ClearFiltersCommand}" />
+                    </StackPanel>
+                    <TextBlock Grid.Row="1" Text="{Binding SoftwareSummary}" Style="{StaticResource Caption}" Margin="0,0,0,8" />
+                    <DataGrid Grid.Row="2" Style="{StaticResource AppDataGrid}" ItemsSource="{Binding Software}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Application" Binding="{Binding Name}" Width="*" />
+                            <DataGridTextColumn Header="Publisher" Binding="{Binding Publisher}" Width="220" />
+                            <DataGridTextColumn Header="Version" Binding="{Binding Version}" Width="120" />
+                            <DataGridTextColumn Header="Installed" Binding="{Binding InstallDate}" Width="100" />
+                            <DataGridTextColumn Header="Architecture" Binding="{Binding Architecture}" Width="100" />
+                            <DataGridTextColumn Header="Size" Binding="{Binding EstimatedSizeBytes, Converter={StaticResource BytesToText}}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Compare">
+                <Grid Margin="0,10,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="Compare with" Style="{StaticResource Caption}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <ComboBox ItemsSource="{Binding Computers}" SelectedItem="{Binding CompareComputer}" DisplayMemberPath="DisplayName"
+                                  Style="{StaticResource AppComboBox}" Width="250" />
+                        <Button Content="Compare software" Style="{StaticResource PrimaryButton}" Command="{Binding CompareCommand}" Margin="8,0,0,0" />
+                    </StackPanel>
+                    <TextBlock Grid.Row="1" Text="{Binding ComparisonSummary}" Style="{StaticResource Caption}" Margin="0,0,0,8" />
+                    <DataGrid Grid.Row="2" Style="{StaticResource AppDataGrid}" ItemsSource="{Binding Comparison}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Application" Binding="{Binding Name}" Width="*" />
+                            <DataGridTextColumn Header="Publisher" Binding="{Binding Publisher}" Width="220" />
+                            <DataGridTextColumn Header="Version" Binding="{Binding Version}" Width="120" />
+                            <DataGridTextColumn Header="Computer" Binding="{Binding ComputerId}" Width="240" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

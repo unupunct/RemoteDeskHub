@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui"
+     xmlns:fire="http://wixtoolset.org/schemas/v4/wxs/firewall">
+
+  <Package Name="RemoteDesk Hub"
+           Manufacturer="RemoteDesk Labs"
+           Version="$(var.ProductVersion)"
+           UpgradeCode="CA7F59E3-63A7-4940-BB5C-C892E10D6368"
+           Language="1033"
+           Scope="perMachine"
+           Compressed="yes">
+
+    <SummaryInformation Description="RemoteDesk Hub management console" Manufacturer="RemoteDesk Labs" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of RemoteDesk Hub is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Icon Id="HubIcon" SourceFile="$(var.PublishDir)\RemoteDeskHub.Desktop.exe" />
+    <Property Id="ARPPRODUCTICON" Value="HubIcon" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALTEXT"
+              Value="RemoteDesk Hub was installed. Start it from the Start menu. The default hub address is https://this-computer:7443." />
+
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.LicenseRtf)" />
+    <ui:WixUI Id="WixUI_Minimal" />
+
+    <Launch Condition="VersionNT64"
+            Message="RemoteDesk Hub requires 64-bit Windows 10 or later." />
+    <Launch Condition="VersionNT &gt;= 1000"
+            Message="RemoteDesk Hub requires Windows 10 or later." />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="RemoteDesk Hub" />
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="RemoteDesk Hub" />
+    </StandardDirectory>
+
+    <Feature Id="MainFeature" Title="RemoteDesk Hub" Level="1" AllowAbsent="no">
+      <ComponentGroupRef Id="HubComponents" />
+      <ComponentRef Id="HubShortcut" />
+      <ComponentRef Id="HubFirewall" />
+    </Feature>
+
+  </Package>
+
+  <Fragment>
+    <ComponentGroup Id="HubComponents" Directory="INSTALLFOLDER">
+      <Files Include="$(var.PublishDir)\**" />
+    </ComponentGroup>
+  </Fragment>
+
+  <Fragment>
+    <Component Id="HubShortcut" Directory="ApplicationProgramsFolder" Guid="B3DD3F77-7127-41EC-8229-CD1E4B95B182">
+      <Shortcut Id="HubStartMenuShortcut"
+                Name="RemoteDesk Hub"
+                Description="RemoteDesk Hub management console"
+                Target="[INSTALLFOLDER]RemoteDeskHub.Desktop.exe"
+                WorkingDirectory="INSTALLFOLDER"
+                Icon="HubIcon" />
+      <RemoveFolder Id="RemoveApplicationProgramsFolder" Directory="ApplicationProgramsFolder" On="uninstall" />
+      <RegistryValue Root="HKLM"
+                     Key="SOFTWARE\RemoteDesk Labs\RemoteDesk Hub"
+                     Name="StartMenuShortcut"
+                     Type="integer"
+                     Value="1"
+                     KeyPath="yes" />
+    </Component>
+  </Fragment>
+
+  <Fragment>
+    <Component Id="HubFirewall" Directory="INSTALLFOLDER" Guid="86F45917-81C7-4CDB-9412-57E52910EE37">
+      <RegistryValue Root="HKLM"
+                     Key="SOFTWARE\RemoteDesk Labs\RemoteDesk Hub"
+                     Name="InstallFolder"
+                     Type="string"
+                     Value="[INSTALLFOLDER]"
+                     KeyPath="yes" />
+      <RegistryValue Root="HKLM"
+                     Key="SOFTWARE\RemoteDesk Labs\RemoteDesk Hub"
+                     Name="Version"
+                     Type="string"
+                     Value="$(var.ProductVersion)" />
+      <!-- The hub accepts agent heartbeats and console clients on TCP 7443 (LAN only). -->
+      <fire:FirewallException Id="HubFirewallRule"
+                              Name="RemoteDesk Hub (HTTPS)"
+                              Description="RemoteDesk Hub management listener"
+                              Port="7443"
+                              Protocol="tcp"
+                              Profile="all"
+                              Scope="localSubnet"
+                              IgnoreFailure="yes" />
+    </Component>
+  </Fragment>
+
+</Wix>

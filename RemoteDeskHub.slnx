@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RemoteDeskHub.Agent/RemoteDeskHub.Agent.csproj" />
+    <Project Path="src/RemoteDeskHub.Core/RemoteDeskHub.Core.csproj" />
+    <Project Path="src/RemoteDeskHub.Desktop/RemoteDeskHub.Desktop.csproj" />
+    <Project Path="src/RemoteDeskHub.HubHost/RemoteDeskHub.HubHost.csproj" />
+    <Project Path="src/RemoteDeskHub.Infrastructure/RemoteDeskHub.Infrastructure.csproj" />
+    <Project Path="src/RemoteDeskHub.Networking/RemoteDeskHub.Networking.csproj" />
+    <Project Path="src/RemoteDeskHub.Shared/RemoteDeskHub.Shared.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/RemoteDeskHub.IntegrationTests/RemoteDeskHub.IntegrationTests.csproj" />
+    <Project Path="tests/RemoteDeskHub.UnitTests/RemoteDeskHub.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/RemoteDeskHub.LoadTest/RemoteDeskHub.LoadTest.csproj" />
+  </Folder>
+</Solution>

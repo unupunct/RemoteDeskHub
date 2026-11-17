@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui"
+     xmlns:fire="http://wixtoolset.org/schemas/v4/wxs/firewall">
+
+  <Package Name="RemoteDesk Agent"
+           Manufacturer="RemoteDesk Labs"
+           Version="$(var.ProductVersion)"
+           UpgradeCode="974B6380-72FE-4C5B-B8F9-8D4DED44CD33"
+           Language="1033"
+           Scope="perMachine"
+           Compressed="yes">
+
+    <SummaryInformation Description="RemoteDesk Agent Windows service" Manufacturer="RemoteDesk Labs" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of RemoteDesk Agent is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <InstallExecuteSequence>
+      <Custom Action="StagePairingPackage" After="InstallFiles" Condition="PAIRINGPACKAGE AND NOT Installed" />
+    </InstallExecuteSequence>
+
+    <Icon Id="AgentIcon" SourceFile="$(var.PublishDir)\RemoteDeskHub.Agent.exe" />
+    <Property Id="ARPPRODUCTICON" Value="AgentIcon" />
+
+    <!--
+      Optional pairing package. Supply it on the command line:
+        msiexec /i RemoteDesk-Agent-1.0.0-x64.msi PAIRINGPACKAGE="C:\temp\site.rdhenroll"
+      The package is copied into the agent data directory before the service starts.
+      The service also picks up %ProgramData%\RemoteDesk Agent\enroll.rdhenroll if copied later.
+    -->
+    <Property Id="PAIRINGPACKAGE" Secure="yes" />
+
+    <!--
+      Opt-in Remote Desktop firewall rule. Pass ENABLE_RDP_FIREWALL=1 to msiexec to install it.
+      The default is no rule: opening TCP 3389 on every managed computer is a significant
+      attack-surface change and must be a deliberate administrator decision.
+    -->
+    <Property Id="ENABLE_RDP_FIREWALL" Secure="yes" />
+
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.LicenseRtf)" />
+    <ui:WixUI Id="WixUI_Minimal" />
+
+    <Launch Condition="VersionNT64"
+            Message="RemoteDesk Agent requires 64-bit Windows 10 or later." />
+    <Launch Condition="VersionNT &gt;= 1000"
+            Message="RemoteDesk Agent requires Windows 10 or later." />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="RemoteDesk Agent" />
+    </StandardDirectory>
+    <StandardDirectory Id="CommonAppDataFolder">
+      <Directory Id="AgentDataFolder" Name="RemoteDesk Agent" />
+    </StandardDirectory>
+
+    <Feature Id="MainFeature" Title="RemoteDesk Agent" Level="1" AllowAbsent="no">
+      <ComponentGroupRef Id="AgentComponents" />
+      <ComponentRef Id="AgentApplication" />
+      <ComponentRef Id="AgentFirewall" />
+      <ComponentRef Id="AgentRemoteDesktopFirewall" />
+    </Feature>
+
+  </Package>
+
+  <Fragment>
+    <ComponentGroup Id="AgentComponents" Directory="INSTALLFOLDER">
+      <Files Include="$(var.PublishDir)\**\*.dll;$(var.PublishDir)\**\*.json;$(var.PublishDir)\**\*.pdb" />
+    </ComponentGroup>
+  </Fragment>
+
+  <Fragment>
+    <Component Id="AgentApplication" Directory="INSTALLFOLDER" Guid="125678BB-D7B9-4A8B-BF57-0DB520E797C3">
+      <File Id="AgentExecutable" Source="$(var.PublishDir)\RemoteDeskHub.Agent.exe" KeyPath="yes" />
+      <File Id="AgentCreatedump" Source="$(var.PublishDir)\createdump.exe" />
+      <ServiceInstall Id="AgentServiceInstall"
+                      Name="RemoteDeskAgent"
+                      DisplayName="RemoteDesk Agent"
+                      Description="Secure LAN management agent for RemoteDesk Hub."
+                      Type="ownProcess"
+                      Start="auto"
+                      ErrorControl="normal"
+                      Account="LocalSystem" />
+      <ServiceControl Id="AgentServiceControl"
+                      Name="RemoteDeskAgent"
+                      Start="install"
+                      Stop="both"
+                      Remove="uninstall"
+                      Wait="yes" />
+    </Component>
+  </Fragment>
+
+  <Fragment>
+    <Component Id="AgentFirewall" Directory="INSTALLFOLDER" Guid="F33D724F-A59D-4CE1-A2CB-338842E294A5">
+      <RegistryValue Root="HKLM"
+                     Key="SOFTWARE\RemoteDesk Labs\RemoteDesk Agent"
+                     Name="InstallFolder"
+                     Type="string"
+                     Value="[INSTALLFOLDER]"
+                     KeyPath="yes" />
+      <RegistryValue Root="HKLM"
+                     Key="SOFTWARE\RemoteDesk Labs\RemoteDesk Agent"
+                     Name="Version"
+                     Type="string"
+                     Value="$(var.ProductVersion)" />
+      <!-- The agent management API listens on TCP 7444 and only trusts the hub certificate. -->
+      <fire:FirewallException Id="AgentFirewallRule"
+                              Name="RemoteDesk Agent (management)"
+                              Description="RemoteDesk Agent management listener"
+                              Port="7444"
+                              Protocol="tcp"
+                              Profile="all"
+                              Scope="localSubnet"
+                              IgnoreFailure="yes" />
+    </Component>
+  </Fragment>
+
+  <Fragment>
+    <!--
+      This component is only installed when the administrator explicitly passes
+      ENABLE_RDP_FIREWALL=1. It only opens the port; it does not enable Remote Desktop or grant
+      sign-in rights.
+    -->
+    <Component Id="AgentRemoteDesktopFirewall"
+               Directory="INSTALLFOLDER"
+               Guid="C3C3B84E-6B1E-4B8B-9E2A-3D8D7A7B6E21"
+               Condition="ENABLE_RDP_FIREWALL = 1">
+      <RegistryValue Root="HKLM"
+                     Key="SOFTWARE\RemoteDesk Labs\RemoteDesk Agent"
+                     Name="RemoteDesktopFirewall"
+                     Type="integer"
+                     Value="1"
+                     KeyPath="yes" />
+      <fire:FirewallException Id="AgentRemoteDesktopFirewallRule"
+                              Name="RemoteDesk Agent (Remote Desktop)"
+                              Description="Inbound Remote Desktop (TCP 3389) for RemoteDesk Hub remote assistance"
+                              Port="3389"
+                              Protocol="tcp"
+                              Profile="all"
+                              Scope="localSubnet"
+                              IgnoreFailure="yes" />
+    </Component>
+  </Fragment>
+
+  <Fragment>
+    <CustomAction Id="StagePairingPackage"
+                  FileRef="AgentExecutable"
+                  ExeCommand="--pair &quot;[PAIRINGPACKAGE]&quot; --data &quot;[AgentDataFolder]&quot; --stage-pairing"
+                  Execute="immediate"
+                  Return="check" />
+  </Fragment>
+
+</Wix>

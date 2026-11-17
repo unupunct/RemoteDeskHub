@@ -1,0 +1,211 @@
+<UserControl x:Class="RemoteDeskHub.Desktop.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:RemoteDeskHub.Desktop.Controls"
+             xmlns:models="clr-namespace:RemoteDeskHub.Core.Models;assembly=RemoteDeskHub.Core"
+             Background="Transparent">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="26,22,26,26">
+        <StackPanel>
+
+            <!-- Stat cards -->
+            <UniformGrid Columns="4" Margin="0,0,0,18">
+                <controls:StatCard Title="TOTAL COMPUTERS" Margin="0,0,6,0"
+                                   Value="{Binding Snapshot.TotalComputers, FallbackValue=0, TargetNullValue=0}"
+                                   Subtitle="{Binding Snapshot.ManagedComputers, StringFormat={}{0} managed by agent, FallbackValue=0}"
+                                   Accent="{StaticResource AccentBrush}" />
+                <controls:StatCard Title="ONLINE" Margin="6,0,6,0"
+                                   Value="{Binding Snapshot.OnlineComputers, FallbackValue=0, TargetNullValue=0}"
+                                   Subtitle="{Binding Snapshot.OfflineComputers, StringFormat={}{0} offline, FallbackValue=0}"
+                                   Accent="{StaticResource SuccessBrush}" />
+                <controls:StatCard Title="ACTIVE ALERTS" Margin="6,0,6,0"
+                                   Value="{Binding Snapshot.ActiveAlerts, FallbackValue=0, TargetNullValue=0}"
+                                   Subtitle="{Binding Snapshot.UnacknowledgedAlerts, StringFormat={}{0} unacknowledged, FallbackValue=0}"
+                                   Accent="{StaticResource WarningBrush}" />
+                <controls:StatCard Title="PENDING AGENTS" Margin="6,0,0,0"
+                                   Value="{Binding Snapshot.PendingAgents, FallbackValue=0, TargetNullValue=0}"
+                                   Subtitle="{Binding Snapshot.DiscoveredDevices, StringFormat={}{0} discovered devices, FallbackValue=0}"
+                                   Accent="{StaticResource AccentCyanBrush}" />
+            </UniformGrid>
+
+            <!-- Charts -->
+            <Grid Margin="0,0,0,18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0" Margin="0,0,0,12">
+                            <TextBlock Text="CPU utilisation" Style="{StaticResource H3}" />
+                            <TextBlock Text="{Binding CpuAverage, Converter={StaticResource PercentToText}, StringFormat='Average {0}'}"
+                                       Style="{StaticResource Caption}" HorizontalAlignment="Right" />
+                        </Grid>
+                        <controls:LineChart Grid.Row="1" Height="200" Series="{Binding CpuSeries}" Maximum="100"
+                                            EmptyText="No CPU history yet — agents report every few seconds." />
+                    </Grid>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0" Margin="0,0,0,12">
+                            <TextBlock Text="Memory utilisation" Style="{StaticResource H3}" />
+                            <TextBlock Text="{Binding MemoryAverage, Converter={StaticResource PercentToText}, StringFormat='Average {0}'}"
+                                       Style="{StaticResource Caption}" HorizontalAlignment="Right" />
+                        </Grid>
+                        <controls:LineChart Grid.Row="1" Height="200" Series="{Binding MemorySeries}" Maximum="100"
+                                            EmptyText="No memory history yet." />
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Gauges and computers -->
+            <Grid Margin="0,0,0,18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="260" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Fleet averages" Style="{StaticResource H3}" Margin="0,0,0,10" />
+                        <controls:Gauge Height="170" Value="{Binding CpuAverage}" Label="CPU" Accent="{StaticResource AccentBrush}" />
+                        <controls:Gauge Height="170" Value="{Binding MemoryAverage}" Label="Memory" Accent="{StaticResource AccentCyanBrush}" />
+                        <controls:Gauge Height="170" Value="{Binding DiskAverage}" Label="Disk" Accent="{StaticResource WarningBrush}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource Card}" Padding="0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0" Margin="18,16,18,10">
+                            <TextBlock Text="Computers" Style="{StaticResource H3}" />
+                            <TextBlock Text="{Binding LastUpdated, StringFormat='Updated {0}'}" Style="{StaticResource Caption}"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding HighlightedComputers}" Margin="10,0,10,10">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type models:ComputerSummary}">
+                                        <Border Background="{StaticResource SurfaceAltBrush}" CornerRadius="7" Padding="12,9" Margin="0,2">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Ellipse Width="9" Height="9" Margin="0,0,10,0" VerticalAlignment="Center"
+                                                         Fill="{Binding Status, Converter={StaticResource StatusToBrush}}" />
+                                                <StackPanel Grid.Column="1">
+                                                    <TextBlock Text="{Binding DisplayName}" FontSize="12.5" FontWeight="SemiBold"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="{Binding IpAddress}" Style="{StaticResource Caption}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding CpuPercent, Converter={StaticResource PercentToText}}"
+                                                               Style="{StaticResource Caption}" Margin="0,0,10,0" />
+                                                    <Border Style="{StaticResource Pill}" Padding="8,2">
+                                                        <TextBlock Text="{Binding StatusText}" FontSize="10.5"
+                                                                   Foreground="{Binding Status, Converter={StaticResource StatusToBrush}}" />
+                                                    </Border>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Alerts and recent actions -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Recent alerts" Style="{StaticResource H3}" Margin="0,0,0,10" />
+                        <ItemsControl ItemsSource="{Binding Snapshot.RecentAlerts}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type models:AlertView}">
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Ellipse Width="8" Height="8" Margin="0,5,10,0" VerticalAlignment="Top"
+                                                 Fill="{Binding Severity, Converter={StaticResource SeverityToBrush}}" />
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                            <TextBlock Text="{Binding Message}" Style="{StaticResource Caption}" TextWrapping="Wrap" />
+                                            <TextBlock Text="{Binding CreatedUtc, Converter={StaticResource UtcToLocal}}"
+                                                       Style="{StaticResource Caption}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="No active alerts." Style="{StaticResource Caption}"
+                                   Visibility="{Binding Snapshot.RecentAlerts.Count, Converter={StaticResource ZeroToCollapsed}}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Recent privileged actions" Style="{StaticResource H3}" Margin="0,0,0,10" />
+                        <ItemsControl ItemsSource="{Binding Snapshot.RecentActions}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type models:AuditView}">
+                                    <Grid Margin="0,0,0,9">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Operation}" FontSize="12.5" FontWeight="SemiBold" />
+                                            <TextBlock Style="{StaticResource Caption}">
+                                                <Run Text="{Binding Actor, Mode=OneWay}" />
+                                                <Run Text=" · " />
+                                                <Run Text="{Binding ComputerName, Mode=OneWay}" />
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Text="{Binding TimestampUtc, Converter={StaticResource UtcToLocal}, ConverterParameter=HH:mm:ss}"
+                                                   Style="{StaticResource Caption}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="No actions recorded yet." Style="{StaticResource Caption}"
+                                   Visibility="{Binding Snapshot.RecentActions.Count, Converter={StaticResource ZeroToCollapsed}}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Quick actions -->
+            <StackPanel Orientation="Horizontal" Margin="0,18,0,0">
+                <Button Content="Refresh dashboard" Style="{StaticResource PrimaryButton}" Command="{Binding RefreshCommand}" />
+                <Button Content="Scan network" Style="{StaticResource SecondaryButton}" Margin="10,0,0,0" Command="{Binding ScanNetworkCommand}" />
+                <TextBlock Text="Tip: use Discovery to add unmanaged computers to the inventory."
+                           Style="{StaticResource Caption}" VerticalAlignment="Center" Margin="16,0,0,0" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
