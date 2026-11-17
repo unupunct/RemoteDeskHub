@@ -40,9 +40,23 @@
     <WixVariable Id="WixUILicenseRtf" Value="$(var.LicenseRtf)" />
     <ui:WixUI Id="WixUI_Minimal" />
 
+    <!--
+      Read the Windows 10+ major version from the registry instead of VersionNT.
+      Some CI images apply an application-compatibility shim that reports VersionNT
+      as Windows 8.1 even on Windows 11, which would incorrectly block the install.
+    -->
+    <Property Id="WINDOWS_MAJOR_VERSION">
+      <RegistrySearch Id="WindowsMajorVersionSearch"
+                      Root="HKLM"
+                      Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+                      Name="CurrentMajorVersionNumber"
+                      Type="raw"
+                      Bitness="always64" />
+    </Property>
+
     <Launch Condition="VersionNT64"
             Message="RemoteDesk Agent requires 64-bit Windows 10 or later." />
-    <Launch Condition="VersionNT &gt;= 1000"
+    <Launch Condition="WINDOWS_MAJOR_VERSION &gt;= 10"
             Message="RemoteDesk Agent requires Windows 10 or later." />
 
     <StandardDirectory Id="ProgramFiles64Folder">
