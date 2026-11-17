@@ -73,7 +73,8 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
     throw 'Installer tests require an elevated PowerShell session because the MSIs install a Windows service and firewall rules.'
 }
 
-$logRoot = Join-Path $env:TEMP ("RemoteDeskInstallerTests-" + [Guid]::NewGuid().ToString('N'))
+$logBase = if ([string]::IsNullOrWhiteSpace($env:RUNNER_TEMP)) { $env:TEMP } else { $env:RUNNER_TEMP }
+$logRoot = Join-Path $logBase ("RemoteDeskInstallerTests-" + [Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Force -Path $logRoot | Out-Null
 Write-Host "Installer test logs: $logRoot" -ForegroundColor Cyan
 
@@ -97,6 +98,10 @@ function Invoke-MsiInstall {
     $process = Start-Process -FilePath 'msiexec.exe' -ArgumentList $arguments -Wait -PassThru
 
     if ($process.ExitCode -notin @(0, 3010)) {
+        if (Test-Path $log) {
+            Write-Host "--- Tail of $log ---" -ForegroundColor Yellow
+            Get-Content $log -Tail 120 | ForEach-Object { Write-Host $_ }
+        }
         throw "MSI install failed for $Msi (exit code $($process.ExitCode)). See $log"
     }
 
@@ -121,6 +126,10 @@ function Invoke-MsiUninstall {
     }
 
     if ($process.ExitCode -notin @(0, 3010)) {
+        if (Test-Path $log) {
+            Write-Host "--- Tail of $log ---" -ForegroundColor Yellow
+            Get-Content $log -Tail 120 | ForEach-Object { Write-Host $_ }
+        }
         throw "MSI uninstall failed for $Msi (exit code $($process.ExitCode)). See $log"
     }
 
