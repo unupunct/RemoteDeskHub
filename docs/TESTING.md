@@ -177,16 +177,16 @@ that is best-effort at runtime and depends on the service running as LocalSystem
 | Agent MSI produced | `artifacts\installers\RemoteDesk-Agent-1.0.0-x64.msi` |
 | Installer checksums | `artifacts\installers\SHA256SUMS.txt` |
 | MSI table validation (read-only) | Hub: `MainFeature`, firewall rule TCP 7443 `LocalSubnet`, `RemoteDeskHub.HubHost.exe`. Agent: `MainFeature`, `RemoteDeskAgent` service (auto, own process), firewall rule TCP 7444 `LocalSubnet`, optional 3389 component gated by `ENABLE_RDP_FIREWALL`, `StagePairingPackage` custom action type 18 at sequence 4001 |
-| MSI installation | **Not performed locally** (shell not elevated); automated in `installer-e2e` CI job |
-| MSI uninstall/upgrade | **Not performed locally**; automated 1.0.0 → 1.0.1 upgrade and uninstall in `installer-e2e` CI job |
+| MSI installation | **Not performed locally** (shell not elevated); passed in the `installer-e2e` CI job |
+| MSI uninstall/upgrade | **Not performed locally**; 1.0.0 → 1.0.1 upgrade and uninstall passed in the `installer-e2e` CI job |
 | Code signing | **Not performed locally** (no certificate); conditional CI step when signing secrets are configured |
 
 The MSIs were produced by `scripts\build-installers.ps1 -Version 1.0.0`, which publishes both
 applications self-contained for `win-x64` and invokes WiX with the UI and Firewall extensions. The
 `installer-e2e` workflow job installs 1.0.0, upgrades to 1.0.1, verifies service, firewall and
-registry state, then uninstalls both products. The workflow has not been executed from this
-development machine, so it is not counted as a local pass. Build success is not proof that
-installation succeeds on a clean machine; see the limitation below.
+registry state, then uninstalls both products. The 1.0.0 release run passed on GitHub-hosted
+`windows-latest`; the local non-elevated shell did not run that path. Build success is not proof
+that installation succeeds on every clean machine; see the limitation below.
 
 ## 7. Known testing limitations
 
@@ -200,8 +200,9 @@ Be explicit about these when evaluating the product:
    installs `RemoteDeskAgent`, starts the service, or runs the collectors against a live hub.
 4. **No local MSI install/uninstall.** Installer tables, custom actions, service registration,
    firewall rule creation and major-upgrade behaviour were built but not executed from this
-   non-elevated shell. The `installer-e2e` GitHub Actions job covers this path but has not been run
-   from this machine. The `PAIRINGPACKAGE` custom action was not run end to end.
+   non-elevated shell. The `installer-e2e` GitHub Actions job covers install, upgrade and uninstall
+   on GitHub-hosted `windows-latest` and passed for 1.0.0. The `PAIRINGPACKAGE` custom action was not
+   exercised end to end.
 5. **No UI automation.** WPF windows and view models are not covered by automated tests. Rendering,
    binding failures, keyboard navigation and DPI behaviour were not asserted. The shared-folder tab
    was inspected manually in the running WPF console; its buttons were not driven by an automated UI

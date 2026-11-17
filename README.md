@@ -226,12 +226,12 @@ were built and their tables validated read-only, but they were not installed or 
 non-elevated build shell. The headless hub host is a same-session process, not a Windows service; see
 [ARCHITECTURE.md](docs/ARCHITECTURE.md) for the remaining service-account key-storage limitation.
 
-The repository now includes a GitHub Actions gate (`.github/workflows/ci.yml`) that builds the
+The repository includes a GitHub Actions gate (`.github/workflows/ci.yml`) that builds the
 solution, runs the tests, runs CodeQL and vulnerability checks, builds 1.0.0 and 1.0.1 MSIs, and
-performs an elevated install → upgrade → uninstall test on `windows-latest`. Signing activates when
-the `CODE_SIGNING_PFX_BASE64` and `CODE_SIGNING_PFX_PASSWORD` secrets are configured. The workflow has
-not yet been executed from this development machine; see [CI.md](docs/CI.md) and
-[TESTING.md](docs/TESTING.md) for the exact status.
+performs an elevated install → upgrade → uninstall test on `windows-latest`. The 1.0.0 release run
+passed all three jobs. Signing activates when the `CODE_SIGNING_PFX_BASE64` and
+`CODE_SIGNING_PFX_PASSWORD` secrets are configured; this release is unsigned. See
+[CI.md](docs/CI.md) and [TESTING.md](docs/TESTING.md) for the exact status.
 
 ## License
 

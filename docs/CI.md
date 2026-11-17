@@ -59,9 +59,10 @@ When configured, the workflow signs the published hub and agent executables befo
 them, then signs both MSIs. Signatures are timestamped with DigiCert and validated with
 `Get-AuthenticodeSignature`. `SHA256SUMS.txt` is generated after signing.
 
-> The workflow has not been executed on a hosted runner from this development machine. The local
-> shell is not elevated, so the install/upgrade/uninstall path is covered by the workflow rather than
-> by the recorded local run.
+> The workflow runs on GitHub-hosted `windows-latest`. The 1.0.0 release run passed the
+> `Build and test`, `CodeQL` and `Installer E2E` jobs, including the elevated install, upgrade and
+> uninstall path. The local shell is not elevated, so the installer path is covered by the hosted
+> workflow rather than by a recorded local run.
 
 ## Branch protection
 
