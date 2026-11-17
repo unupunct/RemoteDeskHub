@@ -24,22 +24,22 @@
     <ui:WixUI Id="WixUI_Minimal" />
 
     <!--
-      Read the Windows 10+ major version from the registry instead of VersionNT.
+      Read the Windows build number from the registry instead of VersionNT.
       Some CI images apply an application-compatibility shim that reports VersionNT
       as Windows 8.1 even on Windows 11, which would incorrectly block the install.
     -->
-    <Property Id="WINDOWS_MAJOR_VERSION">
-      <RegistrySearch Id="WindowsMajorVersionSearch"
+    <Property Id="WINDOWS_BUILD_NUMBER">
+      <RegistrySearch Id="WindowsBuildNumberSearch"
                       Root="HKLM"
                       Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion"
-                      Name="CurrentMajorVersionNumber"
+                      Name="CurrentBuildNumber"
                       Type="raw"
                       Bitness="always64" />
     </Property>
 
     <Launch Condition="VersionNT64"
             Message="RemoteDesk Hub requires 64-bit Windows 10 or later." />
-    <Launch Condition="WINDOWS_MAJOR_VERSION &gt;= 10"
+    <Launch Condition="WINDOWS_BUILD_NUMBER &gt;= 10240"
             Message="RemoteDesk Hub requires Windows 10 or later." />
 
     <StandardDirectory Id="ProgramFiles64Folder">
